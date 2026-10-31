@@ -139,6 +139,19 @@ def build_empty_manifest() -> bytes:
 MANIFEST_BYTES = build_empty_manifest()
 
 
+@app.route("/index.xaml")
+@app.route("/launcher/index.xaml")
+def launcher_home_page():
+    response = Response(
+        Path(__file__).with_name("launcher-home.xaml").read_text(encoding="utf-8"),
+        content_type="application/xaml+xml; charset=utf-8",
+    )
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "-1"
+    return response
+
+
 @app.route("/", defaults={"path": ""})
 @app.route("/<path:path>")
 def catch_all_get(path):
