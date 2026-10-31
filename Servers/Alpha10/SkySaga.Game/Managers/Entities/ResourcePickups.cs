@@ -20,7 +20,7 @@ public static class ResourcePickups
                 && sparseTree.Description.Any(part => part.Position == voxel))
             {
                 SpawnSparseTreeLoot(connection, entity, sparseTree);
-                connection.WorldManager.RemoveSavedKeystoneVein(entity);
+                connection.WorldManager.RemoveSavedOreVein(entity);
                 connection.WorldManager.EntityManager.RemoveEntity(entity.Id);
                 connection.PlayerConnectionManager.BroadcastToAll(new EntityRemoved { Id = entity.Id });
                 break;

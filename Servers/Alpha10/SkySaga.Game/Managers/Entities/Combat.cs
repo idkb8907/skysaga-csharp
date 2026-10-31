@@ -53,7 +53,7 @@ public static class Combat
                 TargetEntityId = target.Id,
                 Amount = 1
             });
-            connection.WorldManager.RemoveSavedKeystoneVein(target);
+            connection.WorldManager.RemoveSavedOreVein(target);
             connection.WorldManager.EntityManager.RemoveEntity(target.Id);
             connection.PlayerConnectionManager.BroadcastToAll(new EntityRemoved { Id = target.Id });
             ResourcePickups.SpawnSparseTreeLoot(connection, target, sparseTree);

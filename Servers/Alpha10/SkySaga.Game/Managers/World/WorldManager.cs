@@ -431,8 +431,8 @@ public sealed class WorldManager : IWorldManager, IDisposable
                 _devices.AddRange(WorldStore.LoadDevices(Info.Id).Select(FromRecord));
 
             foreach (var placed in _devices)
-                if (placed.ItemCrc == Data.InitialKeystoneVeins.ItemCrc)
-                    SpawnSavedKeystoneVein(placed);
+                if (placed.ItemCrc is Data.InitialOreVeins.KeystoneItemCrc or Data.InitialOreVeins.MetalItemCrc)
+                    SpawnSavedOreVein(placed);
                 else if (DeviceTable.TryGet(placed.ItemCrc, out var device))
                     SpawnDevice(placed, device);
 
@@ -440,13 +440,15 @@ public sealed class WorldManager : IWorldManager, IDisposable
         }
     }
 
-    private void SpawnSavedKeystoneVein(PlacedDevice placed)
+    private void SpawnSavedOreVein(PlacedDevice placed)
     {
         var pos = new Vector3Int(placed.X, placed.Y, placed.Z);
         var chunk = new Vector3Int(FloorDiv(pos.X, ChunkSize), FloorDiv(pos.Y, ChunkSize), FloorDiv(pos.Z, ChunkSize));
         var local = new Vector3Int(pos.X - chunk.X * ChunkSize, pos.Y - chunk.Y * ChunkSize, pos.Z - chunk.Z * ChunkSize);
         var voxel = ChunkManager.GetVoxel(chunk, local);
-        if (voxel != 2 || !EntityManager.TryCreateEntity("SparseTreeKeystoneOre", out var entity))
+        var isMetal = placed.ItemCrc == Data.InitialOreVeins.MetalItemCrc;
+        var entityName = isMetal ? "SparseTreeMetalOre" : "SparseTreeKeystoneOre";
+        if (voxel != 2 || !EntityManager.TryCreateEntity(entityName, out var entity))
             return;
         if (!entity.TryGetComponent<ClientSparseTreeComponent>(out var sparseTree)
             || !entity.TryGetComponent<MaterialCompositionComponent>(out var material))
@@ -454,7 +456,7 @@ public sealed class WorldManager : IWorldManager, IDisposable
             EntityManager.RemoveEntity(entity.Id);
             return;
         }
-        sparseTree.TreeType = Util.ComputeCrc32("Keystone_Deposit");
+        sparseTree.TreeType = Util.ComputeCrc32(isMetal ? "Metal_Deposit" : "Keystone_Deposit");
         sparseTree.IsVoxelOwner = true;
         sparseTree.Description = [new TreePart(pos, 0, placed.Face, 2, false, voxel)];
         sparseTree.PartsDestroyed = [false];
@@ -462,12 +464,12 @@ public sealed class WorldManager : IWorldManager, IDisposable
         _deviceEntities[entity.Id] = placed;
     }
 
-    public void RemoveSavedKeystoneVein(Entity entity)
+    public void RemoveSavedOreVein(Entity entity)
     {
         lock (_devicesLock)
         {
             if (!_deviceEntities.TryGetValue(entity.Id, out var placed)
-                || placed.ItemCrc != Data.InitialKeystoneVeins.ItemCrc)
+                || placed.ItemCrc is not (Data.InitialOreVeins.KeystoneItemCrc or Data.InitialOreVeins.MetalItemCrc))
                 return;
             _deviceEntities.Remove(entity.Id);
             _devices.Remove(placed);
